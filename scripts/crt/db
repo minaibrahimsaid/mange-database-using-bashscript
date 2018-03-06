@@ -1,0 +1,15 @@
+#!/bin/bash
+
+db_name=$2
+comment=$3
+owner=`cat ../../system/session`
+db=`tail -1 ../../system/databases`
+last_id=`echo $db | cut -d: -f1`
+new_id=$(( $last_id + 1 ))
+is_db=`egrep :$db_name: ../../system/databases` 
+if [ $is_db ]
+	then
+	echo -3 #already registered 
+else
+	echo "$new_id:$db_name:$owner:$comment" >> ../../system/databases
+fi 

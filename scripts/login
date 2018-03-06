@@ -1,6 +1,6 @@
 #!/bin/bash
 user=$1
-pass=`echo -n $2| md5sum | awk '{ print $1 }'`
+pass=`echo -n $2| md5 | awk '{ print $1 }'`
 db_user=`egrep :$user: ../system/passwd` 
 if [ $db_user ]
 	then
@@ -8,8 +8,8 @@ if [ $db_user ]
 	passwrd=`echo $db_user | cut -d: -f3`
 		if [ $passwrd  == $pass ]
 			then
-			USER_ID=`echo $db_user | cut -d: -f1`
-			echo $USER_ID
+			user_id=`echo $db_user | cut -d: -f1`
+			echo $user_id > ../system/session
 		else
 			echo 0 #wrong password
 		fi

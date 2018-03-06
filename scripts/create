@@ -1,0 +1,17 @@
+#!/bin/bash
+
+case $1 in 
+	database )
+		cd ./crt
+		./db $@
+		;;
+	table )
+		cd ./crt
+		./table $0
+		;;
+	* )
+		echo -4 #command not found
+esac
+		
+
+		
