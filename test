@@ -1,0 +1,41 @@
+#!/bin/bash
+trap cleanup 20 2
+cleanup(){
+  echo "\n you can not exit to quit enter exit  "
+ 
+}
+
+prep_create(){
+	line=`echo $line | cut -d "(" -f 2`
+	line=$(echo -n $line | head -c -1)
+	echo $line
+}
+
+
+
+while [[ 1 ]] 
+do
+	
+	read -p "user - db-name >" choose
+
+case $choose in
+
+
+    q)
+		echo "bye "
+		break
+        ;;
+    *)
+        
+		 if [[ `echo -n $choose | tail -c 1 ` != \; ]]
+		 	then
+		 		line="${line} ${choose}"
+	 		else
+	 			ch=$(echo -n $choose | head -c -1)
+	 			line="${line} ${ch}"
+	 			prep_create $line
+	 			line=""
+		 fi
+		;;
+esac
+done

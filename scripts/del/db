@@ -1,0 +1,17 @@
+#!/bin/bash
+
+db_name=$2
+
+db_to_delete=`egrep :$db_name: ../../system/databases` 
+if [ $db_to_delete ]
+	then
+		db_id=`echo $db_to_delete | cut -d: -f1`		
+		sed -i "/^${db_id}.*/d" ../../system/databases
+else
+	echo -1 #not found
+fi
+
+
+
+
+
