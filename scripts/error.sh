@@ -3,3 +3,4 @@
 -2 #confirmation error
 -3 #already registered 
 -4 #command not found
+-5 #not loged in

@@ -1,4 +1,9 @@
 #!/bin/bash
+
+PATH="$PATH:$HOME/repositories/mange-database-using-bashscript/scripts"
+PATH="$PATH:$HOME/repositories/mange-database-using-bashscript/scripts/create"
+PATH="$PATH:$HOME/repositories/mange-database-using-bashscript/scripts/del"
+
 trap cleanup 20 2
 cleanup(){
   echo "\n you can not exit to quit enter exit  "
@@ -6,9 +11,37 @@ cleanup(){
 }
 
 prep_create(){
+	#echo -n "" > ./tmp/table
 	line=`echo $line | cut -d "(" -f 2`
 	line=$(echo -n $line | head -c -1)
-	echo $line
+	echo $line | tr ',' '\n' > ./tmp/table 
+}
+
+prog_switch (){
+	case $com in 
+		create)
+			targ=`echo $line | cut -d " " -f2`
+			case $targ in 
+				database )
+					db `echo $line | cut -d " " -f3` `echo $line | cut -d " " -f4`
+					;;
+				table )
+					prep_table `echo $line | cut -d " " -f3`
+					prep_create $line
+					table `echo $line | cut -d " " -f3`
+					;;
+				* )
+					echo -4 #command not found
+		esac
+		;;
+		use)
+			use `echo $line | cut -d " " -f2`
+		;;
+		*)
+		echo "error comand undefined $com"
+		;;
+		esac
+		
 }
 
 
@@ -33,7 +66,8 @@ case $choose in
 	 		else
 	 			ch=$(echo -n $choose | head -c -1)
 	 			line="${line} ${ch}"
-	 			prep_create $line
+	 			com=`echo $line | cut -d " " -f1`
+	 			prog_switch $com $line
 	 			line=""
 		 fi
 		;;
