@@ -114,7 +114,6 @@ if [[ $check == 0 ]]
 fi
 
 mv ./tmp/table_im ./metadata/$db/$table_name
-echo $table_name >> ./metadata/$db/tables
 touch ./databases/$db/$table_name
 
 

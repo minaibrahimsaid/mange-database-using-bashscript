@@ -1,0 +1,9 @@
+#!/bin/bash
+db=`egrep :$1: ./system/databases`
+if [[ ! $db ]]; then
+	echo -1
+	exit
+fi
+rm -r databases/$1
+rm -r metadata/$1
+sed -i "/:$1:/d" system/databases
