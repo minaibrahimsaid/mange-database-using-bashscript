@@ -1,2 +1,1 @@
-id int pk 
- name varchar
+create table offic

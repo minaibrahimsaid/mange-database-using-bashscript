@@ -3,6 +3,14 @@
 PATH="$PATH:$HOME/repositories/mange-database-using-bashscript/scripts"
 PATH="$PATH:$HOME/repositories/mange-database-using-bashscript/scripts/create"
 PATH="$PATH:$HOME/repositories/mange-database-using-bashscript/scripts/del"
+if [ $# -eq 0 ]
+  then
+	echo "no user"
+	exit 1
+elif [[ `egrep :$1: ./system/passwd` ]]; then
+		user_login $1
+
+fi
 
 trap cleanup 20 2
 cleanup(){
@@ -18,7 +26,11 @@ prep_create(){
 }
 
 prog_switch (){
+
 	case $com in 
+		show)
+			show `echo $line | cut -d " " -f2`
+			;;
 		create)
 			targ=`echo $line | cut -d " " -f2`
 			case $targ in 
@@ -26,9 +38,11 @@ prog_switch (){
 					db `echo $line | cut -d " " -f3` `echo $line | cut -d " " -f4`
 					;;
 				table )
-					prep_table `echo $line | cut -d " " -f3`
+					# table `echo $line | cut -d " " -f3`
+					prep_line=$line
 					prep_create $line
-					table `echo $line | cut -d " " -f3`
+					table `echo $prep_line | cut -d " " -f3`
+					
 					;;
 				* )
 					echo -4 #command not found
@@ -37,6 +51,10 @@ prog_switch (){
 		use)
 			use `echo $line | cut -d " " -f2`
 		;;
+		logout)
+			user_logout
+			exit 1
+			;;
 		*)
 		echo "error comand undefined $com"
 		;;
@@ -48,14 +66,17 @@ prog_switch (){
 
 while [[ 1 ]] 
 do
-	
-	read -p "user - db-name >" choose
+	user_id=`egrep ^[0-9]+: ./system/session | cut -d ":" -f1`
+	user=`egrep ^$user_id: ./system/passwd | cut -d ":" -f2`
+	db=`cat ./system/session | cut -d : -f2`	
+	read -p "${user}:${db} >" choose
 
 case $choose in
 
 
     q)
 		echo "bye "
+		user_logout
 		break
         ;;
     *)

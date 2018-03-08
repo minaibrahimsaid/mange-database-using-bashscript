@@ -14,5 +14,7 @@ else
 	echo "$new_id:$db_name:$owner:$comment" >> ./system/databases
 	db_dir="./databases/${db_name}"
 	md_dir="./metadata/${db_name}"
+	tables_file="${md_dir}/tables"
 	mkdir $db_dir $md_dir
+	touch $tables_file
 fi 

@@ -1,2 +1,123 @@
-query = $1
-echo $query
+#!/bin/bash
+table_name=$1
+db=`cat ./system/session | cut -d : -f2`
+if [[ ! $db ]]; then
+	echo -6 #use database first
+	exit
+fi
+is_table=`ls -1 ./databases/$db |egrep ^$table_name ` 
+if [[ $is_table ]]; then
+	echo -3
+	exit
+fi
+echo -n "" > ./tmp/table_im
+awk '
+function is_option(input) {
+    if (input == "pk")
+        return 1
+    else if (input == "null")
+        return 2
+    else if (input == "a_i")
+        return 3
+    else if (input == "unique")
+        return 4
+    else
+        return 0
+
+}
+BEGIN {
+	OFS = ":"
+	is_error = 0
+	target_error = 0
+	SRESERVED = "int_varchar_txt_pk_table_database_create_update"
+	split(SRESERVED, VRESERVED, "_")
+	SDATA_TYPES = "int_varchar_txt"
+	split(SDATA_TYPES, VDATA_TYPES, "_")
+	for (i in VRESERVED) RESERVED[VRESERVED[i]] = ""
+	for (i in VDATA_TYPES) DATA_TYPES[VDATA_TYPES[i]] = ""
+} 
+{
+	if ( $1 in RESERVED) {
+		is_error = 1 
+	} else {
+		f_name = $1
+	}
+
+	if( $2 in DATA_TYPES){
+		f_type = $2
+	}else{
+		is_error = 1
+	}
+
+	f_pk = 0 
+	f_null = 0 
+	f_a_i = 0 
+	f_unique = 0
+
+	if (is_option($3) == 1)
+        f_pk = 1
+    else if (is_option($3) == 2)
+        f_null = 1
+    else if (is_option($3) == 3)
+        f_a_i = 1
+    else if (is_option($3) == 4)
+        f_unique = 1
+
+    if (is_option($4) == 1)
+        f_pk = 1
+    else if (is_option($4) == 2)
+        f_null = 1
+    else if (is_option($4) == 3)
+        f_a_i = 1
+    else if (is_option($4) == 4)
+        f_unique = 1
+
+    if (is_option($5) == 1)
+        f_pk = 1
+    else if (is_option($5) == 2)
+        f_null = 1
+    else if (is_option($5) == 3)
+        f_a_i = 1
+    else if (is_option($5) == 4)
+        f_unique = 1
+
+    if (is_option($6) == 1)
+        f_pk = 1
+    else if (is_option($6) == 2)
+        f_null = 1
+    else if (is_option($6) == 3)
+        f_a_i = 1
+    else if (is_option($6) == 4)
+        f_unique = 1
+
+    if(f_pk && f_null)
+    	is_error = 1
+
+	if(f_a_i && f_type != "int")
+		is_error = 1
+    
+    if (is_error){
+    	print 0 , $0
+    	exit
+    }else{
+    	print f_name , f_type , f_pk , f_unique , f_null , f_a_i
+    }
+}
+' ./tmp/table >> ./tmp/table_im
+
+check=`tail -1 ./tmp/table_im | cut -d ":" -f1`
+if [[ $check == 0 ]]
+	then
+	error=`tail -1 ./tmp/table_im | cut -d ":" -f2`
+	echo "error near ${error}"
+	exit
+fi
+
+mv ./tmp/table_im ./metadata/$db/$table_name
+echo $table_name >> ./metadata/$db/tables
+touch ./databases/$db/$table_name
+
+
+
+
+

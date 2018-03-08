@@ -4,3 +4,4 @@
 -3 #already registered 
 -4 #command not found
 -5 #not loged in
+-6 #use database first
