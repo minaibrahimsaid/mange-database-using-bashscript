@@ -26,6 +26,13 @@ prep_create(){
 	echo $line | tr ',' '\n' > ./tmp/table 
 }
 
+prep_insert(){
+	#echo -n "" > ./tmp/table
+	line=`echo $line | cut -d "(" -f 2`
+	line=$(echo -n $line | head -c -1)
+	echo $line | tr ',' '\n' > ./tmp/table 
+}
+
 prog_switch (){
 
 	case $com in 
@@ -72,6 +79,19 @@ prog_switch (){
 			;;
 		help)
 			cat ./about/help
+		;;
+		insert)
+		if [[ `echo $line | cut -d " " -f2`=="into" ]]
+		then
+			prep_line=$line
+			prep_insert $line
+			insert `echo $prep_line | cut -d " " -f3`
+		else
+
+		echo -4
+
+		fi
+
 		;;
 		*)
 		echo "error comand undefined $com"
