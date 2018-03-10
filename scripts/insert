@@ -11,36 +11,106 @@ if [[ ! $is_table ]]; then
 	exit
 fi
 echo -n "" > ./tmp/table_im
-restrictions=`cat metadata/$db/$table_name`
-echo $restrictions
-current_field=0
+
+declare -A col
+declare -A type_of
+declare -A is_pk
+declare -A is_unique
+declare -A is_null
+declare -A is_ai
+
+while IFS='' read -r line || [[ -n "$line" ]]; do
+	key=`echo $line | cut -d ":" -f1`
+	col[$key]=0
+	type_of[$key]=`echo $line | cut -d ":" -f2`
+	is_pk[$key]=`echo $line | cut -d ":" -f3`
+	is_unique[$key]=`echo $line | cut -d ":" -f4`
+	is_null[$key]=`echo $line | cut -d ":" -f5`
+	is_ai[$key]=`echo $line | cut -d ":" -f6`
+done < metadata/$db/$table_name
+
 declare -A data
 while IFS='' read -r line || [[ -n "$line" ]]; do
 	key=`echo $line | cut -d "=" -f1`
 	val=`echo $line | cut -d "=" -f2`
-	$data[$key]=$val
-    echo "Text read from file: ${data[key]}"
+	data[$key]=$val
+	((col[$key]+=1))
 done < tmp/table
-# awk -v restrictions="$restrictions" '
-# function is_type_matching(input,type) {
-#     if (type == "int"){
-#     	regex="/[0-9]+/"
-#     	return match($input,$regex)
-#     }
-#     else if (type == "varchar"){
-#     	regex="/[a-zA-Z0-9._-]+/"
-#     	return match($input,$regex)
-#     }
-#     else
-#         return 0
 
-# }
-# BEGIN {
-# 	OFS = ":"
-# 	FS = "="
-	
-# } 
-# {
-# 	print $xyz
-# }
-# ' ./tmp/table >> ./tmp/table_im
+
+for K in "${!col[@]}";do
+
+	if [[ ${col[$K]} > 1 ]]; then
+		echo -7
+		exit
+	fi
+
+	if [[ ${col[$K]} == "0" && ${is_null[$K]} == "0" ]]
+		then
+		echo -8
+		exit
+	fi
+
+	case ${type_of[$K]} in 
+		int)
+			if [[ ${data[$K]}=~^[0-9]+$ ]]; then 
+				pass=1
+			else
+				echo -9
+				exit
+			fi 
+		;;
+		varchar)
+			##
+		;;
+		*)
+			echo -1
+			exit
+		;;
+	esac
+	if [[ ${data[$K]} && ${is_pk[$K]} == "1" ]]; then
+		egrep ^${data[$K]}: ./databases/$db/$table_name
+		if  [[ `egrep ^${data[$K]}: ./databases/$db/$table_name` ]]
+			then
+			 echo -10
+			 exit
+		fi
+fi
+
+	if [[  ${is_ai[$K]} == "1" && ${col[$K]} == "0" ]]
+		then
+		awk 'BEGIN{
+			max = 0 
+			FS = ":" 
+		}{ 
+			print $1
+			if(max < $1){
+				max = $1
+			}
+	 	}END{
+			print max
+		}' ./databases/$db/$table_name > ./tmp/table_max
+		max=`tail -1 ./tmp/table_max`
+		((max+=1))
+		data[$K]=$max
+		((col[$K]+=1))
+	fi
+done
+
+for K in "${!col[@]}";do
+
+	if [[ ${col[$K]} == "0" ]]; then
+		data[$K]="NULL"
+	fi
+done
+
+
+output=""
+while IFS='' read -r line || [[ -n "$line" ]]; do
+	key=`echo $line | cut -d ":" -f1`
+	output="${output}${data[$key]}:"
+done < metadata/$db/$table_name
+output=$(echo -n $output | head -c -1)
+echo $output >> databases/$db/$table_name
+
+

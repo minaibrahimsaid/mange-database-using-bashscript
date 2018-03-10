@@ -13,17 +13,23 @@ elif [[ `egrep :$1: ./system/passwd` ]]; then
 
 fi
 
-trap cleanup 20 2
-cleanup(){
-  echo "\n you can not exit to quit enter exit  "
+# trap cleanup 20 2
+# cleanup(){
+#   echo "\n you can not exit to quit enter exit  "
  
-}
+# }
 
 prep_create(){
 	#echo -n "" > ./tmp/table
 	line=`echo $line | cut -d "(" -f 2`
 	line=$(echo -n $line | head -c -1)
 	echo $line | tr ',' '\n' > ./tmp/table 
+}
+
+prep_alter(){
+	#echo -n "" > ./tmp/table
+	line=`echo $line | cut -d " " -f5-`
+	echo $line | tr ' ' '\n' > ./tmp/table 
 }
 
 prep_insert(){
@@ -73,6 +79,9 @@ prog_switch (){
 		use)
 			use `echo $line | cut -d " " -f2`
 		;;
+		desc)
+			desc `echo $line | cut -d " " -f2`
+		;;
 		logout)
 			user_logout
 			exit 1
@@ -85,7 +94,7 @@ prog_switch (){
 		then
 			prep_line=$line
 			prep_insert $line
-			insert `echo $prep_line | cut -d " " -f3`
+			insert `echo $prep_line | cut -d " " -f3` 
 		else
 
 		echo -4
@@ -93,9 +102,42 @@ prog_switch (){
 		fi
 
 		;;
-		*)
-		echo "error comand undefined $com"
+		sort)
+		if [[ `echo $line | cut -d " " -f3`=="by" ]]
+			then
+			sor `echo $line | cut -d " " -f2` `echo $line | cut -d " " -f4` `echo $line | cut -d " " -f5`
+		else
+
+		echo -4
+
+		fi
 		;;
+		alter) #ALTER TABLE `opensource_student` CHANGE `id` `iid`
+		#ALTER TABLE `opensource_student` ADD `mina` INT NOT NULL AFTER `track_id`;
+		#ALTER TABLE `opensource_student` DROP `track_id`;" 
+		mod=`echo $line | cut -d " " -f4`
+		case $mod in
+			name)
+				prep_line=$line
+				prep_alter $line
+				name `echo $prep_line | cut -d " " -f3` 
+				;;
+			set)
+				change `echo $line | cut -d " " -f3,5,6` 
+				;;
+			add)
+				add_column `echo $line | cut -d " " -f3,5,6`
+				;;
+			drop)
+			;;
+			*)
+			echo -4
+		esac
+		;;
+		*)
+		echo -4 #"error command undefined $com"
+		;;
+		
 		esac
 		
 }
