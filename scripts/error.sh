@@ -14,3 +14,4 @@
 -13 #too many args
 -14 #command denied 
 -15 #wrong value
+-16 #column already available

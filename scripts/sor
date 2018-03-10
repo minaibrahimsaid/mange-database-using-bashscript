@@ -32,7 +32,7 @@ END{
 
 nr=`tail -1 ./tmp/table_nr | cut -d ":" -f1`
 ny=`tail -1 ./tmp/table_nr | cut -d ":" -f2`
-#rm ./tmp/table_nr
+rm ./tmp/table_nr
 if [[ $des == "des" ]]
 	then
 	if [[ $ny == "int" ]];then

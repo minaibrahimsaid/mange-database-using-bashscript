@@ -1,16 +1,22 @@
 #!/bin/bash
 app_path=`which maf | rev | cut -d/ -f2- | rev`
 cd $app_path
-PATH="$PATH:$HOME/repositories/mange-database-using-bashscript/scripts"
-PATH="$PATH:$HOME/repositories/mange-database-using-bashscript/scripts/create"
-PATH="$PATH:$HOME/repositories/mange-database-using-bashscript/scripts/drop"
+PATH="$PATH:$app_path/scripts"
+PATH="$PATH:$app_path/scripts/create"
+PATH="$PATH:$app_path/scripts/drop"
+PATH="$PATH:$app_path/scripts/alter"
+
 if [ $# -eq 0 ]
   then
 	echo "no user"
 	exit 1
 elif [[ `egrep :$1: ./system/passwd` ]]; then
-		user_login $1
-
+		logged=`user_login $1`
+		if [[ $logged == "0" ]]; then
+			echo "wrong password"
+			exit
+		fi
+echo
 fi
 
 # trap cleanup 20 2
@@ -30,6 +36,11 @@ prep_alter(){
 	#echo -n "" > ./tmp/table
 	line=`echo $line | cut -d " " -f5-`
 	echo $line | tr ' ' '\n' > ./tmp/table 
+}
+prep_alter_add(){
+	#echo -n "" > ./tmp/table
+	line=`echo $line | cut -d " " -f8-`
+	echo $line > ./tmp/table 
 }
 
 prep_insert(){
@@ -112,23 +123,24 @@ prog_switch (){
 
 		fi
 		;;
-		alter) #ALTER TABLE `opensource_student` CHANGE `id` `iid`
-		#ALTER TABLE `opensource_student` ADD `mina` INT NOT NULL AFTER `track_id`;
-		#ALTER TABLE `opensource_student` DROP `track_id`;" 
+		alter)
 		mod=`echo $line | cut -d " " -f4`
 		case $mod in
-			name)
+			rename)
 				prep_line=$line
 				prep_alter $line
 				name `echo $prep_line | cut -d " " -f3` 
 				;;
 			set)
-				change `echo $line | cut -d " " -f3,5,6` 
+				col_change `echo $line | cut -d " " -f3,5,6` 
 				;;
 			add)
-				add_column `echo $line | cut -d " " -f3,5,6`
+				prep_line=$line
+				prep_alter_add $line
+				col_add `echo $prep_line | cut -d " " -f3,5,6,7`
 				;;
 			drop)
+				col_del `echo $line | cut -d " " -f3,5,6`
 			;;
 			*)
 			echo -4
