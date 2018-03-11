@@ -1,0 +1,26 @@
+#!/bin/bash
+user=$1
+if [[ $user ]]; then
+	read -s -p "enter password :  " get_pass
+	echo 
+	read -s -p "re-enter password :  " re_get_pass
+	echo 
+	if [[ $get_pass == $re_get_pass ]]; then
+		pass=`echo -n $get_pass| md5sum | awk '{ print $1 }'`
+		lastuser=`tail -1 ./system/passwd`
+		lastid=`echo $lastuser | cut -d: -f1`
+		new_id=$(( $lastid + 1 ))
+		db_user=`egrep :$user: ./system/passwd` 
+		if [ $db_user ]
+			then
+			echo -3 #user already registered 
+		else
+			echo "$new_id:$user:$pass" >> ./system/passwd
+		fi
+	else
+		echo 0
+	fi
+else
+	echo -4
+fi
+

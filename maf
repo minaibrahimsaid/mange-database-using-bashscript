@@ -161,22 +161,57 @@ do
 	user_id=`egrep ^[0-9]+: ./system/session | cut -d ":" -f1`
 	user=`egrep ^$user_id: ./system/passwd | cut -d ":" -f2`
 	db=`cat ./system/session | cut -d : -f2`	
-	read -p "${user}@${db} >" choose
-
-case $choose in
-
-
-    q)
-		echo "bye "
-		user_logout
-		break
-        ;;
-    *)
-        
+	read -p "${user}@${db} $con>" choose
+	looper=`echo $choose | cut -d " " -f1`
+	case $looper in
+	    q)
+			echo "bye "
+			user_logout
+			break
+	        ;;
+        exit)
+			echo "bye "
+			user_logout
+			break
+	        ;;
+	    use)
+			choose=`echo $choose | tr ";" " "`
+			use `echo $choose | cut -d " " -f2`
+			;;
+		desc)
+			choose=`echo $choose | tr ";" " "`
+			desc `echo $choose | cut -d " " -f2`
+			;;
+		login)
+			choose=`echo $choose | tr ";" " "`
+			user_login `echo $choose | cut -d " " -f2`
+			;;
+		su)
+			choose=`echo $choose | tr ";" " "`
+			user_login `echo $choose | cut -d " " -f2`
+			;;
+		useradd)
+			choose=`echo $choose | tr ";" " "`
+			user_add `echo $choose | cut -d " " -f2`
+			;;
+		userdel)
+			choose=`echo $choose | tr ";" " "`
+			user_del `echo $choose | cut -d " " -f2`
+			;;
+		logout)
+			user_logout
+			exit 1
+			;;
+		help)
+			cat ./about/help
+			;;
+	    *)
 		 if [[ `echo -n $choose | tail -c 1 ` != \; ]]
 		 	then
+		 		con=";"
 		 		line="${line} ${choose}"
 	 		else
+	 			con=""
 	 			ch=$(echo -n $choose | head -c -1)
 	 			line="${line} ${ch}"
 	 			com=`echo $line | cut -d " " -f1`
@@ -184,5 +219,5 @@ case $choose in
 	 			line=""
 		 fi
 		;;
-esac
+	esac
 done
