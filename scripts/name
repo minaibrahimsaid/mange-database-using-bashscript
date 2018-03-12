@@ -1,0 +1,52 @@
+#!/bin/bash
+table_name=$1
+db=`cat ./system/session | cut -d : -f2`
+if [[ ! $db ]]; then
+	echo -6 #use database first
+	exit
+fi
+is_table=`ls -1 ./databases/$db |egrep ^$table_name ` 
+if [[ ! $is_table ]]; then
+	echo -1
+	exit
+fi
+
+declare -A col
+ declare -A reserved
+ reserved[int]=1
+ reserved[varchar]=1
+ reserved[null]=1
+ reserved[pk]=1
+ reserved[unique]=1
+ reserved[a_i]=1
+while IFS='' read -r line || [[ -n "$line" ]]; do
+	key=`echo $line | cut -d ":" -f1`
+	col[$key]=1
+done < metadata/$db/$table_name
+declare -A input
+col_to_change=`cat tmp/table | cut -d$'\n' -f1`
+new_col=`cat tmp/table | cut -d$'\n' -f2`
+if [[ `cat tmp/table | cut -d$'\n' -f3` ]]
+	then
+	echo -13
+	exit
+fi
+
+if [[ ! $new_col ]]; then
+	echo -4
+	exit
+fi
+ if [[ ! ${col[$col_to_change]} ]]
+ 	then
+ 	echo -11
+ 	exit
+ fi
+ for k in "${!reserved[@]}"
+ do
+ 	if [[ "$k" == "$new_col" ]]
+ 		then
+ 		echo -12
+ 		exit
+ 	fi
+ done
+ sed -i "s/^$col_to_change:/$new_col:/" metadata/$db/$table_name

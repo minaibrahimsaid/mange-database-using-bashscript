@@ -1,0 +1,13 @@
+#!/bin/bash
+db=`cat ./system/session | cut -d : -f2`
+if [[ ! $db ]]; then
+	echo -1
+	exit
+fi
+is_table=`ls -1 ./databases/$db |egrep ^$1 ` 
+if [[ ! $is_table ]]; then
+	echo -1
+	exit
+fi
+rm  databases/$db/$1
+rm  metadata/$db/$1

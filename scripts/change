@@ -1,0 +1,82 @@
+#!/bin/bash
+table_name=$1
+field_name=$2
+command_name=`echo $3 | cut -d "=" -f1`
+command_value=`echo $3 | cut -d "=" -f2`
+if [[ $command_name != "name" && $command_value != "0" && $command_value != "1" ]]; then
+	echo -15
+	exit
+fi
+db=`cat ./system/session | cut -d : -f2`
+if [[ ! $db ]]; then
+	echo -6 #use database first
+	exit
+fi
+is_table=`ls -1 ./databases/$db |egrep ^$table_name ` 
+if [[ ! $is_table ]]; then
+	echo -1
+	exit
+fi
+field=`egrep ^${field_name}: ./metadata/$db/$table_name`
+if [[ ! $field ]] ; then 
+	echo -1
+	exit
+fi
+
+if [[ `head -1 ./databases/$db/$table_name` ]] ; then
+	echo -14
+	exit
+fi
+
+if [[ $command_name == "pk" ]] ; then 
+	if [[ `head -1 ./metadata/$db/$table_name | cut -d ":" -f3` == 1 ]]; then
+		echo -14
+		exit
+	fi
+fi
+
+if [[ $command_name == "a_i" && `echo $field | cut -d ":" -f3` == 0 ]]; then
+		echo -14
+	exit
+fi
+
+if [[ $command_name == "type" && $command_value == "varchar" && `echo $field | cut -d ":" -f6` == 1 ]]; then
+	echo -14
+	exit
+fi
+
+f_name=$field_name
+f_type=`echo $field | cut -d ":" -f2`
+f_pk=`echo $field | cut -d ":" -f3`
+f_unique=`echo $field | cut -d ":" -f4`
+f_null=`echo $field | cut -d ":" -f5`
+f_a_i=`echo $field | cut -d ":" -f6`
+
+case $command_name in
+	
+	name)
+	f_name=$command_value
+	;;
+	type)
+	f_type=$command_value
+	;;
+	pk)
+	f_pk=$command_value
+	;;
+	unique)
+	f_unique=$command_value
+	;;
+	null)
+	f_null=$command_value
+	;;
+	a_i)
+	f_a_i=$command_value
+	;;
+	*)
+	echo -1
+	exit
+	;;
+esac
+
+new_line="${f_name}:${f_type}:${f_pk}:${f_unique}:${f_null}:${f_a_i}"
+sed -i "s/^${field_name}:.*$/${new_line}/" ./metadata/$db/$table_name

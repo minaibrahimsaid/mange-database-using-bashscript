@@ -1,0 +1,13 @@
+#!/bin/bash
+db=`cat ./system/session | cut -d : -f2`
+if [[ ! $db ]]; then
+	echo -1
+	exit
+fi
+is_table=`ls -1 ./databases/$db |egrep ^$1 ` 
+if [[ ! $is_table ]]; then
+	echo -1
+	exit
+fi
+echo "name:type:pk:unique:null:a_i"
+cat  metadata/$db/$1

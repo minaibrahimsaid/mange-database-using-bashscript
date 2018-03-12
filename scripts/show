@@ -1,0 +1,18 @@
+target=$1
+case $target in 
+	databases)
+		ls -1 ./databases | awk '{ print NR , $0 }'
+		;;
+	tables)
+		db=`cat ./system/session | cut -d : -f2`
+		if [[ $db ]]; then
+			ls -1 ./databases/$db | awk '{ print NR , $0 }'
+		else
+			echo -6
+		fi
+		;;
+	*)
+		echo -4
+		;;
+esac
+	

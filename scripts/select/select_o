@@ -1,0 +1,35 @@
+#!/bin/bash
+table_name=$2
+field_name=$1
+db=`cat ./system/session | cut -d : -f2`
+if [[ ! $db ]]; then
+	echo -6 #use database first
+	exit
+fi
+
+if [[ ! `ls -1 ./databases/$db | egrep ^$table_name` ]]; then
+	echo -1
+	exit
+fi
+
+if [[ $field_name == "-a" ]]; then
+	headline=`cut -d ":" -f1 ./metadata/$db/$table_name | tr "\n" ":"`
+	echo $headline > ./tmp/output 
+	cut -d ":" -f1- ./databases/$db/$table_name >> ./tmp/output
+	cat ./tmp/output | column -t -s ':'
+else
+	num=`awk -v col_names=$field_name 'BEGIN{ FS = ":" ; split ( col_names , col_arr , /,/); } {  flag = 0 ;  for ( i in col_arr ) { if( col_arr[i] == $1 ) flag = 1 ; } if( flag ){ printf("%s,", NR ) } }' ./metadata/$db/$table_name | head -c -1`
+	if [[ ! $num ]]; then
+		echo -1 
+		exit
+	fi
+	headline=`cut -d ":" -f1 ./metadata/$db/$table_name  | tr "\n" ":" | cut -d ":" -f$num`
+	echo $headline > ./tmp/output 
+	cut -d ":" -f$num ./databases/$db/$table_name >> ./tmp/output
+	cat ./tmp/output | column -t -s ':'
+fi
+
+
+format_output 
+
+

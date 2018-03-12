@@ -1,0 +1,40 @@
+ if [[ -f ./tmp/output ]]; then
+  echo "Do you want to save the result?"
+        echo "  1 -To print using HTML"
+        echo "  2 -To print using CSV"
+        read -p "enter your choice: " choiceP
+        case $choiceP in
+
+
+        1)
+          awk 'BEGIN {FS = " " ; print "<table border=3px >" }
+          NR == 1{
+              print "<tr>"
+              tag = "th"
+          }
+          NR != 1{
+              print "<tr>"
+              tag = "td"
+          }
+          {
+              for(i=1; i<=NF; ++i) print "<" tag " width=\"" widths[i] "\">" $i "</" tag ">"
+              print "</tr>"
+          }
+          END { print "</table>"}' ./tmp/output  > ./tmp/html.html
+          xdg-open ./tmp/html.html
+              ;;
+
+        2)
+          
+          awk  ' BEGIN {FS = " "} { for (i=1;i<=NF;i++) printf ("%s%c", $i, i+1 <= NF ? "," : "\n"); }' < ./tmp/output  > ./tmp/csv.csv
+          xdg-open ./tmp/csv.csv
+          ;;
+
+
+        *)
+      echo "wrong entry"
+      ;;
+
+    esac
+fi
+ 

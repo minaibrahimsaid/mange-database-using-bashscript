@@ -1,0 +1,291 @@
+#!/bin/bash
+trap cleanup 20 2
+cleanup(){
+	echo 
+	echo "bye"
+	user_logout
+	exit
+}
+
+app_path=`which maf | rev | cut -d/ -f2- | rev`
+cd $app_path
+PATH="$PATH:$app_path/scripts"
+PATH="$PATH:$app_path/scripts/create"
+PATH="$PATH:$app_path/scripts/drop"
+PATH="$PATH:$app_path/scripts/alter"
+PATH="$PATH:$app_path/scripts/select"
+PATH="$PATH:$app_path/scripts/update"
+PATH="$PATH:$app_path/scripts/delete"
+
+if [ $# -eq 0 ]
+  then
+	echo "no user"
+	exit 1
+elif [[ `egrep :$1: ./system/passwd` ]]; then
+		logged=`user_login $1`
+		if [[ $logged == "0" ]]; then
+			echo "wrong password"
+			exit
+		fi
+echo
+fi
+
+prep_create(){
+	echo -n "" > ./tmp/table
+	line=`echo $line | cut -d "(" -f 2`
+	line=$(echo -n $line | head -c -1)
+	echo $line | tr ',' '\n' > ./tmp/table 
+}
+
+prep_alter(){
+	echo -n "" > ./tmp/table
+	line=`echo $line | cut -d " " -f5-`
+	echo $line | tr ' ' '\n' > ./tmp/table 
+}
+prep_alter_add(){
+	echo -n "" > ./tmp/table
+	line=`echo $line | cut -d " " -f8-`
+	echo $line > ./tmp/table 
+}
+prep_insert(){
+	echo -n "" > ./tmp/table
+	line=`echo $line | cut -d "(" -f 2`
+	line=$(echo -n $line | head -c -1)
+	echo $line | tr ',' '\n' > ./tmp/table 
+}
+
+prep_where(){
+	echo -n "" > tmp/table
+	line=`echo $line | cut -d "(" -f 2`
+	line=$(echo -n $line | head -c -1)
+	echo $line | tr '-' '\n' > tmp/table 
+}
+
+prog_switch (){
+
+	case $com in 
+		where)
+			prep_line=$line
+			prep_where $line
+			where `echo $prep_line | cut -d " " -f2`
+			;;
+		select)
+			if [[ `echo $line | cut -d " " -f5` == where ]]; then
+				prep_line=$line
+				prep_where $line
+				select_f `echo $prep_line | cut -d " " -f2,4,5`
+			else
+				select_o `echo $line | cut -d " " -f2,4`
+			fi
+			;;
+		show)
+			show `echo $line | cut -d " " -f2`
+			;;
+		create)
+			targ=`echo $line | cut -d " " -f2`
+			case $targ in 
+				database )
+					create_db `echo $line | cut -d " " -f3` `echo $line | cut -d " " -f4`
+					;;
+				table )
+					# table `echo $line | cut -d " " -f3`
+					prep_line=$line
+					prep_create $line
+					create_table `echo $prep_line | cut -d " " -f3`
+					
+					;;
+				* )
+					echo -4 #command not found
+			esac
+			;;
+	     drop)
+			targ=`echo $line | cut -d " " -f2`
+			case $targ in 
+				database )
+					drop_db `echo $line | cut -d " " -f3`
+					;;
+				table )
+					drop_table `echo $line | cut -d " " -f3`
+					
+					;;
+				* )
+					echo -4 #command not found
+		esac
+		;;
+		use)
+			use `echo $line | cut -d " " -f2`
+		;;
+		desc)
+			desc `echo $line | cut -d " " -f2`
+		;;
+		logout)
+			user_logout
+			exit 1
+			;;
+		help)
+			cat ./about/help
+		;;
+		insert)
+		if [[ `echo $line | cut -d " " -f2`=="into" ]]
+		then
+			prep_line=$line
+			prep_insert $line
+			insert `echo $prep_line | cut -d " " -f3` 
+		else
+
+		echo -4
+
+		fi
+
+		;;
+		update) #UPDATE employee SET salary=30000 WHERE (employee id=3)
+
+			if [[ `echo $line | cut -d " " -f3`=="set" ]]
+			then
+			if [[ `echo $line | cut -d " " -f5` == where ]]; then
+				prep_line=$line
+				prep_where $line
+				update_f `echo $prep_line | cut -d " " -f2,4`
+			else
+				update_o `echo $line | cut -d " " -f2,4`
+			fi
+			else
+				echo -4
+
+			fi
+			;;
+		delete) #UPDATE employee SET salary=30000 WHERE (employee id=3)
+
+			if [[ `echo $line | cut -d " " -f2`=="from" ]]
+			then
+			if [[ `echo $line | cut -d " " -f4` == where ]]; then
+				prep_line=$line
+				prep_where $line
+				delete_f `echo $prep_line | cut -d " " -f3`
+			else
+				delete_o `echo $line | cut -d " " -f3`
+			fi
+			else
+				echo -4
+
+			fi
+			;;
+		sort)
+		if [[ `echo $line | cut -d " " -f3`=="by" ]]
+			then
+			sor `echo $line | cut -d " " -f2` `echo $line | cut -d " " -f4` `echo $line | cut -d " " -f5`
+		else
+
+		echo -4
+
+		fi
+		;;
+		alter)
+		mod=`echo $line | cut -d " " -f4`
+		case $mod in
+			rename)
+				prep_line=$line
+				prep_alter $line
+				name `echo $prep_line | cut -d " " -f3` 
+				;;
+			set)
+				col_change `echo $line | cut -d " " -f3,5,6` 
+				;;
+			add)
+				prep_line=$line
+				prep_alter_add $line
+				col_add `echo $prep_line | cut -d " " -f3,5,6,7`
+				;;
+			drop)
+				col_del `echo $line | cut -d " " -f3,5,6`
+			;;
+			
+			*)
+			echo -4
+		esac
+		;;
+		*)
+		echo -4 #"error command undefined $com"
+		;;
+		
+		esac
+		
+}
+
+while [[ 1 ]] 
+do
+	user_id=`egrep ^[0-9]+: ./system/session | cut -d ":" -f1`
+	user=`egrep ^$user_id: ./system/passwd | cut -d ":" -f2`
+	db=`cat ./system/session | cut -d : -f2`
+	read -p "${user}@${db} $con>" choose
+	looper=`echo $choose | cut -d " " -f1`
+	case $looper in
+	    q)
+			echo "bye "
+			user_logout
+			break
+	        ;;
+        exit)
+			echo "bye "
+			user_logout
+			break
+	        ;;
+	    use)
+			choose=`echo $choose | tr ";" " "`
+			use `echo $choose | cut -d " " -f2`
+			;;
+		desc)
+			choose=`echo $choose | tr ";" " "`
+			desc `echo $choose | cut -d " " -f2`
+			;;
+		login)
+			choose=`echo $choose | tr ";" " "`
+			user_login `echo $choose | cut -d " " -f2`
+			;;
+		su)
+			choose=`echo $choose | tr ";" " "`
+			user_login `echo $choose | cut -d " " -f2`
+			;;
+		useradd)
+			choose=`echo $choose | tr ";" " "`
+			user_add `echo $choose | cut -d " " -f2`
+			;;
+		passwd)
+			choose=`echo $choose | tr ";" " "`
+			user_passwd `echo $choose | cut -d " " -f2`
+			;;
+		userdel)
+			choose=`echo $choose | tr ";" " "`
+			user_del `echo $choose | cut -d " " -f2`
+			;;
+		clear)
+			choose=`echo $choose | tr ";" " "`
+			clear
+			;;
+		show)
+			choose=`echo $choose | tr ";" " "`
+			show `echo $choose | cut -d " " -f2`
+			;;
+		logout)
+			user_logout
+			exit 1
+			;;
+		help)
+			cat ./about/help
+			;;
+	    *)
+		 if [[ `echo -n $choose | tail -c 1 ` != \; ]]
+		 	then
+		 		con=";"
+		 		line="${line} ${choose}"
+	 		else
+	 			con=""
+	 			ch=$(echo -n $choose | head -c -1)
+	 			line="${line} ${ch}"
+	 			com=`echo $line | cut -d " " -f1`
+	 			prog_switch $com $line
+	 			line=""
+		 fi
+		;;
+	esac
+done

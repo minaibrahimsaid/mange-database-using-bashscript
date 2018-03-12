@@ -1,0 +1,17 @@
+#!/bin/bash
+database=$1
+loged_in_user=`egrep ^[0-9]+: ./system/session | cut -d ":" -f1`
+if [ $loged_in_user ]
+	then
+		is_database=`egrep :$database: ./system/databases` 
+		if [ $is_database ]
+			then
+			databasename=`echo $is_database | cut -d: -f2`
+			echo "${loged_in_user}:${databasename}:" > ./system/session
+
+			else
+				echo -1 #not found 
+		fi
+	else
+		echo -5 #not loged in
+fi

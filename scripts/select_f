@@ -1,0 +1,59 @@
+#!/bin/bash
+table_name=$2
+field_name=$1
+
+db=`cat ./system/session | cut -d : -f2`
+if [[ ! $db ]]; then
+	echo -6 #use database first
+	exit
+fi
+
+if [[ ! `ls -1 ./databases/$db | egrep ^$table_name` ]]; then
+	echo -1
+	exit
+fi
+
+cat ./databases/company/employee > ./tmp/$table_name
+
+while IFS='' read -r line || [[ -n "$line" ]]; do
+
+	if [[ `echo $line | egrep "and"`  ]]; then
+		line=`echo $line | cut -d " " -f2`
+		key=`echo $line | cut -d "=" -f1`
+		val=`echo $line | cut -d "=" -f2`
+		num=`awk -v col_name=$key 'BEGIN{ FS = ":" }{ if( $1 == col_name ){ print NR } }' ./metadata/${db}/${table_name}`
+		awk -v f=$num -v v=$val  'BEGIN{ FS = ":" ; OFS = ":" }{ if( $f==v ) print $0 }' ./tmp/$table_name > ./tmp/tmp_res
+		cat ./tmp/tmp_res > ./tmp/$table_name
+	fi
+
+	if [[ `echo $line | egrep "rx"`  ]]; then
+		line=`echo $line | cut -d " " -f2`
+		key=`echo $line | cut -d "~" -f1`
+		val=`echo $line | cut -d "~" -f2`
+		num=`awk -v col_name=$key 'BEGIN{ FS = ":" }{ if( $1 == col_name ){ print NR } }' ./metadata/${db}/${table_name}`
+		awk -v f=$num -v v=$val  'BEGIN{ FS = ":" ; OFS = ":" }{ if( match( $f , v) ) print $0 }' ./tmp/$table_name > ./tmp/tmp_res
+		cat ./tmp/tmp_res > ./tmp/$table_name
+		# sort -u ./tmp/$table_name #> ./tmp/$table_name
+	fi
+done < tmp/table
+
+
+if [[ $field_name == "-a" ]]; then
+	headline=`cut -d ":" -f1 ./metadata/$db/$table_name | tr "\n" ":"`
+	echo $headline > ./tmp/output 
+	cut -d ":" -f1- ./tmp/$table_name  >> ./tmp/output
+	cat ./tmp/output | column -t -s ':'
+else
+	num=`awk -v col_names=$field_name 'BEGIN{ FS = ":" ; split ( col_names , col_arr , /,/); } {  flag = 0 ;  for ( i in col_arr ) { if( col_arr[i] == $1 ) flag = 1 ; } if( flag ){ printf("%s,", NR ) } }' ./metadata/$db/$table_name | head -c -1`
+	if [[ ! $num ]]; then
+		echo -1 
+		exit
+	fi
+	headline=`cut -d ":" -f1 ./metadata/$db/$table_name  | tr "\n" ":" | cut -d ":" -f$num`
+	echo $headline > ./tmp/output 
+	cut -d ":" -f$num ./tmp/$table_name >> ./tmp/output
+	cat ./tmp/output | column -t -s ':'
+fi
+
+
+

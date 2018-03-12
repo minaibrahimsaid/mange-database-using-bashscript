@@ -1,0 +1,50 @@
+#!/bin/bash
+table_name=$1
+f_name=$2
+des=$3
+db=`cat ./system/session | cut -d : -f2`
+if [[ ! $db ]]; then
+	echo -6 #use database first
+	exit
+fi
+is_table=`ls -1 ./databases/$db |egrep ^$table_name ` 
+if [[ ! $is_table ]]; then
+	
+	echo -1
+	exit
+fi
+
+awk -v f_name=$f_name 'BEGIN{ 
+FS = ":" 
+target = 0
+type = 0
+OFS = ":"
+}{
+	print f_name , $1 , NR , $2
+	if( f_name == $1 ){
+		target = NR
+		type = $2
+	}
+}
+END{
+	print target , type
+}' ./metadata/$db/$table_name > ./tmp/table_nr
+
+nr=`tail -1 ./tmp/table_nr | cut -d ":" -f1`
+ny=`tail -1 ./tmp/table_nr | cut -d ":" -f2`
+rm ./tmp/table_nr
+if [[ $des == "des" ]]
+	then
+	if [[ $ny == "int" ]];then
+		cat ./databases/$db/$table_name | sort -r -n -t":" -k$nr
+		else
+		cat ./databases/$db/$table_name | sort -r -t":" -k$nr
+fi
+	
+else
+	if [[ $ny == "int" ]];then
+		cat ./databases/$db/$table_name | sort -n -t":" -k$nr
+		else
+		cat ./databases/$db/$table_name | sort -t":" -k$nr
+	fi
+fi

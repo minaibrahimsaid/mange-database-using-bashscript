@@ -1,0 +1,13 @@
+test cases :
+
+
+1- loggin 
+  .wrong username
+  .wrong password
+  .username already exist
+
+2- create database
+	.database already exist
+	.show databases
+	.delete database
+
