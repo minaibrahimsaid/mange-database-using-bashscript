@@ -7,8 +7,7 @@ if [[ $user ]]; then
 	echo 
 	if [[ $get_pass == $re_get_pass ]]; then
 		pass=`echo -n $get_pass| md5sum | awk '{ print $1 }'`
-		lastuser=`tail -1 ./system/passwd`
-		lastid=`echo $lastuser | cut -d: -f1`
+		lastid=`cat ./system/passwd | sort -n -t":" -k1 | tail -1 | cut -d ":" -f1`
 		new_id=$(( $lastid + 1 ))
 		db_user=`egrep :$user: ./system/passwd` 
 		if [ $db_user ]

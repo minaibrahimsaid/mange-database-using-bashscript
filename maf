@@ -1,4 +1,12 @@
 #!/bin/bash
+trap cleanup 20 2
+cleanup(){
+	echo 
+	echo "bye"
+	user_logout
+	exit
+}
+
 app_path=`which maf | rev | cut -d/ -f2- | rev`
 cd $app_path
 PATH="$PATH:$app_path/scripts"
@@ -19,40 +27,61 @@ elif [[ `egrep :$1: ./system/passwd` ]]; then
 echo
 fi
 
-# trap cleanup 20 2
-# cleanup(){
-#   echo "\n you can not exit to quit enter exit  "
- 
-# }
-
 prep_create(){
-	#echo -n "" > ./tmp/table
+	echo -n "" > ./tmp/table
 	line=`echo $line | cut -d "(" -f 2`
 	line=$(echo -n $line | head -c -1)
 	echo $line | tr ',' '\n' > ./tmp/table 
 }
 
 prep_alter(){
-	#echo -n "" > ./tmp/table
+	echo -n "" > ./tmp/table
 	line=`echo $line | cut -d " " -f5-`
 	echo $line | tr ' ' '\n' > ./tmp/table 
 }
 prep_alter_add(){
-	#echo -n "" > ./tmp/table
+	echo -n "" > ./tmp/table
 	line=`echo $line | cut -d " " -f8-`
 	echo $line > ./tmp/table 
 }
-
 prep_insert(){
-	#echo -n "" > ./tmp/table
+	echo -n "" > ./tmp/table
 	line=`echo $line | cut -d "(" -f 2`
 	line=$(echo -n $line | head -c -1)
 	echo $line | tr ',' '\n' > ./tmp/table 
 }
 
+prep_where(){
+	echo -n "" > tmp/table
+	line=`echo $line | cut -d "(" -f 2`
+	line=$(echo -n $line | head -c -1)
+	echo $line | tr '-' '\n' > tmp/table 
+}
+
+# prep_where_s(){
+# 	#echo -n "" > ./tmp/table
+# 	line=`echo $line | cut -d "(" -f 2`
+# 	line=$(echo -n $line | head -c -1)
+# 	echo $line | tr '-' '\n' > ./tmp/table 
+# }
+
 prog_switch (){
 
 	case $com in 
+		where)
+			prep_line=$line
+			prep_where $line
+			where `echo $prep_line | cut -d " " -f2`
+			;;
+		select)
+			if [[ `echo $line | cut -d " " -f5` == where ]]; then
+				prep_line=$line
+				prep_where $line
+				select_f `echo $prep_line | cut -d " " -f2,4,5`
+			else
+				select_o `echo $line | cut -d " " -f2,4`
+			fi
+			;;
 		show)
 			show `echo $line | cut -d " " -f2`
 			;;
@@ -154,13 +183,11 @@ prog_switch (){
 		
 }
 
-
-
 while [[ 1 ]] 
 do
 	user_id=`egrep ^[0-9]+: ./system/session | cut -d ":" -f1`
 	user=`egrep ^$user_id: ./system/passwd | cut -d ":" -f2`
-	db=`cat ./system/session | cut -d : -f2`	
+	db=`cat ./system/session | cut -d : -f2`
 	read -p "${user}@${db} $con>" choose
 	looper=`echo $choose | cut -d " " -f1`
 	case $looper in
@@ -194,9 +221,21 @@ do
 			choose=`echo $choose | tr ";" " "`
 			user_add `echo $choose | cut -d " " -f2`
 			;;
+		passwd)
+			choose=`echo $choose | tr ";" " "`
+			user_passwd `echo $choose | cut -d " " -f2`
+			;;
 		userdel)
 			choose=`echo $choose | tr ";" " "`
 			user_del `echo $choose | cut -d " " -f2`
+			;;
+		clear)
+			choose=`echo $choose | tr ";" " "`
+			clear
+			;;
+		show)
+			choose=`echo $choose | tr ";" " "`
+			show `echo $choose | cut -d " " -f2`
 			;;
 		logout)
 			user_logout

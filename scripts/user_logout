@@ -1,2 +1,3 @@
 #!/bin/bash
-echo -n "" > ./system/session
+rm  tmp/*
+echo -n "" > system/session

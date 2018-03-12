@@ -1,0 +1,114 @@
+#!/bin/bash
+table_name=$1
+db=`cat ./system/session | cut -d : -f2`
+if [[ ! $db ]]; then
+	echo -6 #use database first
+	exit
+fi
+is_table=`ls -1 ./databases/$db |egrep ^$table_name ` 
+if [[ ! $is_table ]]; then
+	echo -1
+	exit
+fi
+echo -n "" > ./tmp/table_im
+
+declare -A col
+declare -A type_of
+declare -A is_pk
+declare -A is_unique
+declare -A is_null
+declare -A is_ai
+
+while IFS='' read -r line || [[ -n "$line" ]]; do
+	key=`echo $line | cut -d ":" -f1`
+	col[$key]=0
+	type_of[$key]=`echo $line | cut -d ":" -f2`
+	is_pk[$key]=`echo $line | cut -d ":" -f3`
+	is_unique[$key]=`echo $line | cut -d ":" -f4`
+	is_null[$key]=`echo $line | cut -d ":" -f5`
+	is_ai[$key]=`echo $line | cut -d ":" -f6`
+done < metadata/$db/$table_name
+
+declare -A data
+while IFS='' read -r line || [[ -n "$line" ]]; do
+	key=`echo $line | cut -d "=" -f1`
+	val=`echo $line | cut -d "=" -f2`
+	data[$key]=$val
+	((col[$key]+=1))
+done < tmp/table
+
+
+for K in "${!col[@]}";do
+
+	if [[ ${col[$K]} > 1 ]]; then
+		echo -7
+		exit
+	fi
+
+	if [[ ${col[$K]} == "0" && ${is_null[$K]} == "0" ]]
+		then
+		echo -8
+		exit
+	fi
+
+	case ${type_of[$K]} in 
+		int)
+			if [[ ${data[$K]}=~^[0-9]+$ ]]; then 
+				pass=1
+			else
+				echo -9
+				exit
+			fi 
+		;;
+		varchar)
+			##
+		;;
+		*)
+			echo -1
+			exit
+		;;
+	esac
+	if [[ ${data[$K]} && ${is_pk[$K]} == "1" ]]; then
+		egrep ^${data[$K]}: ./databases/$db/$table_name
+		if  [[ `egrep ^${data[$K]}: ./databases/$db/$table_name` ]]
+			then
+			 echo -10
+			 exit
+		fi
+fi
+
+	if [[  ${is_ai[$K]} == "1" && ${col[$K]} == "0" ]]
+		then
+		awk 'BEGIN{
+			max = 0 
+			FS = ":" 
+		}{ 
+			print $1
+			if(max < $1){
+				max = $1
+			}
+	 	}END{
+			print max
+		}' ./databases/$db/$table_name > ./tmp/table_max
+		max=`tail -1 ./tmp/table_max`
+		((max+=1))
+		data[$K]=$max
+		((col[$K]+=1))
+	fi
+done
+
+for K in "${!col[@]}";do
+
+	if [[ ${col[$K]} == "0" ]]; then
+		data[$K]="NULL"
+	fi
+done
+
+
+output=""
+while IFS='' read -r line || [[ -n "$line" ]]; do
+	key=`echo $line | cut -d ":" -f1`
+	output="${output}${data[$key]}:"
+done < metadata/$db/$table_name
+output=$(echo -n $output | head -c -1)
+echo $output >> databases/$db/$table_name

@@ -1,0 +1,31 @@
+#!/bin/bash
+table_name=$1
+db=`cat ./system/session | cut -d : -f2`
+if [[ ! $db ]]; then
+	echo -6 #use database first
+	exit
+fi
+
+if [[ ! $`ls -1 ./databases/$db |egrep ^$table_name ` ]]; then
+	echo -1
+	exit
+fi
+
+declare -A and 
+declare -A or
+while IFS='' read -r line || [[ -n "$line" ]]; do
+	if [[ `echo $line | egrep "and"`  ]]; then
+		line=`echo $line | tr "and" " "`
+		key=`echo $line | cut -d "=" -f1`
+		val=`echo $line | cut -d "=" -f2`
+		and[$key]=$val
+	fi
+	if [[ `echo $line | egrep "or"`  ]]; then
+		line=`echo $line | tr "or" " "`
+		key=`echo $line | cut -d "=" -f1`
+		val=`echo $line | cut -d "=" -f2`
+		or[$key]=$val
+	fi
+done < tmp/table
+
+# awk '' ./metadata/$db/$table_name
