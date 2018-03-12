@@ -13,6 +13,9 @@ PATH="$PATH:$app_path/scripts"
 PATH="$PATH:$app_path/scripts/create"
 PATH="$PATH:$app_path/scripts/drop"
 PATH="$PATH:$app_path/scripts/alter"
+PATH="$PATH:$app_path/scripts/select"
+PATH="$PATH:$app_path/scripts/update"
+PATH="$PATH:$app_path/scripts/delete"
 
 if [ $# -eq 0 ]
   then
@@ -58,13 +61,6 @@ prep_where(){
 	echo $line | tr '-' '\n' > tmp/table 
 }
 
-# prep_where_s(){
-# 	#echo -n "" > ./tmp/table
-# 	line=`echo $line | cut -d "(" -f 2`
-# 	line=$(echo -n $line | head -c -1)
-# 	echo $line | tr '-' '\n' > ./tmp/table 
-# }
-
 prog_switch (){
 
 	case $com in 
@@ -100,8 +96,8 @@ prog_switch (){
 					;;
 				* )
 					echo -4 #command not found
-		esac
-		;;
+			esac
+			;;
 	     drop)
 			targ=`echo $line | cut -d " " -f2`
 			case $targ in 
@@ -142,6 +138,38 @@ prog_switch (){
 		fi
 
 		;;
+		update) #UPDATE employee SET salary=30000 WHERE (employee id=3)
+
+			if [[ `echo $line | cut -d " " -f3`=="set" ]]
+			then
+			if [[ `echo $line | cut -d " " -f5` == where ]]; then
+				prep_line=$line
+				prep_where $line
+				update_f `echo $prep_line | cut -d " " -f2,4`
+			else
+				update_o `echo $line | cut -d " " -f2,4`
+			fi
+			else
+				echo -4
+
+			fi
+			;;
+		delete) #UPDATE employee SET salary=30000 WHERE (employee id=3)
+
+			if [[ `echo $line | cut -d " " -f2`=="from" ]]
+			then
+			if [[ `echo $line | cut -d " " -f4` == where ]]; then
+				prep_line=$line
+				prep_where $line
+				delete_f `echo $prep_line | cut -d " " -f3`
+			else
+				delete_o `echo $line | cut -d " " -f3`
+			fi
+			else
+				echo -4
+
+			fi
+			;;
 		sort)
 		if [[ `echo $line | cut -d " " -f3`=="by" ]]
 			then
@@ -171,6 +199,7 @@ prog_switch (){
 			drop)
 				col_del `echo $line | cut -d " " -f3,5,6`
 			;;
+			
 			*)
 			echo -4
 		esac

@@ -51,9 +51,12 @@ for K in "${!col[@]}";do
 		exit
 	fi
 
-	case ${type_of[$K]} in 
+	if [[ ${data[$K]} ]]; then
+		case ${type_of[$K]} in
+
 		int)
-			if [[ ${data[$K]}=~^[0-9]+$ ]]; then 
+			
+			if [[ ${data[$K]} =~ ^[0-9]+$ ]]; then 
 				pass=1
 			else
 				echo -9
@@ -68,8 +71,10 @@ for K in "${!col[@]}";do
 			exit
 		;;
 	esac
+	fi
+
+	
 	if [[ ${data[$K]} && ${is_pk[$K]} == "1" ]]; then
-		egrep ^${data[$K]}: ./databases/$db/$table_name
 		if  [[ `egrep ^${data[$K]}: ./databases/$db/$table_name` ]]
 			then
 			 echo -10

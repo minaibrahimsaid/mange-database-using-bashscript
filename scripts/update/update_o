@@ -1,0 +1,107 @@
+table_name=$1
+field_name=$2
+db=`cat ./system/session | cut -d : -f2`
+if [[ ! $db ]]; then
+	echo -6 
+	exit
+fi
+
+if [[ ! `ls -1 ./databases/$db | egrep ^$table_name` ]]; then
+	echo -1
+	exit
+fi
+
+echo $field_name | tr "," "\n" > ./tmp/update_$table_name
+
+declare -A data
+while IFS='' read -r line || [[ -n "$line" ]]; do
+	key=`echo $line | cut -d "=" -f1`
+	val=`echo $line | cut -d "=" -f2`
+	if [[ ! $val ]]; then
+		echo -8
+		exit
+	fi
+	data[$key]=$val
+done < ./tmp/update_$table_name
+
+keys=""
+vals=""
+for key in "${!data[@]}";do
+	keys="${keys}${key},"
+	vals="${vals}${data[$key]},"
+done
+keys=`echo -n $keys | head -c -1`
+vals=`echo -n $vals | head -c -1`
+
+
+declare -A col
+declare -A type_of
+declare -A is_pk
+declare -A is_unique
+declare -A is_null
+declare -A is_ai
+
+while IFS='' read -r line || [[ -n "$line" ]]; do
+	key=`echo $line | cut -d ":" -f1`
+	col[$key]=0
+	type_of[$key]=`echo $line | cut -d ":" -f2`
+	is_pk[$key]=`echo $line | cut -d ":" -f3`
+	is_unique[$key]=`echo $line | cut -d ":" -f4`
+	is_null[$key]=`echo $line | cut -d ":" -f5`
+	is_ai[$key]=`echo $line | cut -d ":" -f6`
+done < metadata/$db/$table_name
+
+for K in "${!data[@]}";do
+
+
+	case ${type_of[$K]} in 
+		int)
+			if [[ ${data[$K]} =~ ^[0-9]+$ ]]; then 
+				pass=1
+			else
+				echo -9
+				exit
+			fi 
+		;;
+		varchar)
+			##
+		;;
+		*)
+			echo -1
+			exit
+		;;
+	esac
+	if [[ ${data[$K]} && ${is_pk[$K]} == "1" ]]; then
+		if  [[ `egrep ^${data[$K]}: ./databases/$db/$table_name` ]]
+			then
+			 echo -10
+			 exit
+		fi
+fi
+
+done
+
+num=`awk -v col_names=$keys 'BEGIN{ FS = ":" ; split ( col_names , col_arr , /,/); } {  flag = 0 ;  for ( i in col_arr ) { if( col_arr[i] == $1 ) flag = 1 ; } if( flag ){ printf("%s,", NR ) } }' ./metadata/$db/$table_name | head -c -1`
+awk -v nums=$num -v vals=$vals 'BEGIN{ FS = ":" ;  OFS = ":" ;  split ( nums , num_arr , /,/); split ( vals , val_arr , /,/);} { for ( i in num_arr ) { gsub( $num_arr[i] , val_arr[i] , $num_arr[i]) } print $0 }' ./databases/$db/$table_name > ./tmp/$table_name
+cat ./tmp/$table_name > ./databases/$db/$table_name
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
