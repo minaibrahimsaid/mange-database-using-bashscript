@@ -74,8 +74,10 @@ prog_switch (){
 				prep_line=$line
 				prep_where $line
 				select_f `echo $prep_line | cut -d " " -f2,4,5`
+				format_output 
 			else
 				select_o `echo $line | cut -d " " -f2,4`
+				format_output 
 			fi
 			;;
 		show)
@@ -154,7 +156,7 @@ prog_switch (){
 
 			fi
 			;;
-		delete) #UPDATE employee SET salary=30000 WHERE (employee id=3)
+		delete) 
 
 			if [[ `echo $line | cut -d " " -f2`=="from" ]]
 			then
@@ -238,10 +240,10 @@ do
 			choose=`echo $choose | tr ";" " "`
 			desc `echo $choose | cut -d " " -f2`
 			;;
-		login)
-			choose=`echo $choose | tr ";" " "`
-			user_login `echo $choose | cut -d " " -f2`
-			;;
+		# login)
+		# 	choose=`echo $choose | tr ";" " "`
+		# 	user_login `echo $choose | cut -d " " -f2`
+		# 	;;
 		su)
 			choose=`echo $choose | tr ";" " "`
 			user_login `echo $choose | cut -d " " -f2`

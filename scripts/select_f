@@ -55,5 +55,7 @@ else
 	cat ./tmp/output | column -t -s ':'
 fi
 
+format_output 
+
 
 
