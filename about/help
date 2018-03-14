@@ -1,2 +1,97 @@
-this is the help file 
+Syntax:
 
+a) general commands:
+
+  1) To log into the MAF shell use the command:
+    maf [user_name]  (followed by carriege return)
+  
+    you'll be prompted to enter your password, for the sake of trial, you can use username : fahd and password : 789 or amr : 789
+  
+  2) to preview databases in the system use the command:
+    show [databases]
+    can be followed by a semicolon or not
+   
+  3) to use a certain db:
+    use [database_name];
+    
+  4) to get the description of a table, first use the database that contain it and use the command:
+    desc [table_name];
+  
+  5) to clear the shell:
+      clear
+      
+  6) to logout from the database:
+    logout
+    or alternatively,
+    q
+
+  7) to get help with the functions use the command:
+    help
+    
+    note: help is still being developed and will not yet be as helpful as this readme file
+ 
+b) User managment commands:
+  1) to add a user:
+    useradd [user_name];
+  
+  2) to change password:
+    passwd [user_name];
+    
+  3) to remove a user:
+    userdel [user_name];
+  
+  4) to switch users:
+    su [user_name];
+    
+        you'll be prompted to enter your password, for the sake of trial, you can use username : fahd and password : 789 or amr : 789
+
+c) DDL (Data definition Language):
+
+  1) to create a db use the command:
+    create database [database_name];
+
+  2) to create a table use the command:
+    create table [table_name] ([field_name][data_type][options],[field_name][data_type][options]);
+  
+  3) to drop a table use the command:
+    drop table [table_name];
+  
+  4) to modify table structure (adding or removimg columns):
+    alter table [table_name] add column [column_name] [data_type] [options...];
+    alter table [table_name] drop column [column_name];
+    alter table [table_name] set [field_name] [option]=[value];  
+    # for data types use int or varchar, for a_i (auto_increment), nall (sets the field as nullable), unique (doesn't accept    repeated value) and pk (primary_key) the value would be 1 for teuw or 0 for false.
+  
+d) DML (Data Management Language):
+  1) to update all records of a column:
+    update [table_name] set [field_name]=[value];
+   
+  2) to add conditions to the update query:
+    update [table_name] set [field_name]=[value] where ([field_name]=[value]);
+    
+  3) to insert a new record into a table:
+    insert into [table_name] ([field_name]=[value], [field_name]=[value]);
+    
+  4) to delete all records in a table:
+    delete from [table_name];
+    
+  5) to delete a certain record in a table:
+    delete from [table_name] where [field_name]=[value];
+    
+ e) DQL (Data Query Language):
+ 
+  1) to select fields of a record:
+    select -a from [table_name];
+  
+  2) to specify conditions with the select statment:
+    select [field_name],[field_name] from [table_name] where ([select_option][field_name]=[value]);
+
+    [select_option] can be [-and] if searching with a word or the user wants to make an anding of the result. Alternativly it can be [-rx] if the user wishes to search for a regex.
+
+
+areas of future enhancement:
+
+1) all errors are numberd and saved in the error.sh file which in the next release will manage to convert error number to an error message to be echoed.
+2) adding permissions to users on specific databases and tables.
+3) making an installation package instead of user having to add the $PATH manually.
+4) security wasn't a priority in this project for the sake of studying and it needs to be improved.
